@@ -3,6 +3,8 @@ Created on Nov 26, 2016
 
 @author: solo
 
+Displays recorded log data for multiple variable in a tabular file (XLS, CSV or TSV)
+Data for each variable is in a column, the first row contains the variable's name
 Booleans are converted to 1.0 or 0.0
 xlrd does not distinguish between float and ints
 also, pyqtgraph displays arrays of floats, so everything is in float
@@ -11,10 +13,13 @@ from PyQt4 import QtGui, QtCore
 import pyqtgraph as pg
 import sys
 from ui import uiPlotView
+import webbrowser
 import version
 
 # globals
 variables = []      # list of Variables, all recorded data is read in here
+timer = None        # the first column, a varaiable with a list of time values
+mainWindow = None
 ui = None
 widget = None
 colors = [(255, 0, 0), (255, 153, 51), (255, 204, 153), (255, 255, 153), (204, 255, 153), (0, 255, 0), 
@@ -29,12 +34,12 @@ class Variable:
         self.values = []        # list of recorded values for this variable
         self.max = ''           # max value: empty
         self.min = ''
-        self.constant = True    # is the value changing or not
+        self.inactive = True    # is the value changing or not
         self.selected = False   # true if checkbox is checked
-        self.item = None        # checkbox item with variable's name
-        self.color = None       # index into colors[]
+        self.color = None       # value from colors[], when selected
+        self.items = None       # list of display items associated with variable's name
 
-    # value is a string
+    # input param 'value' is a string; add it to list of values[]
     def addValue(self, value):
         try:                    # check if this is an int or float value
             value = float(value)
@@ -42,35 +47,55 @@ class Variable:
             pass                # leave it as a string
         self.values.append(value)
 
+    # set min, max, numeric, inactive
+    def analyze(self):
+        try:
+            self.max = max(self.values)
+            self.min = min(self.values)
+            sum(self.values)    # sum will crash if not numeric
+            self.numeric = True
+        except:
+            self.numeric = False
+        self.inactive = self.max == self.min    # non changing
+
+# parse previously read in CSV data and set up globals variables[] and timer
 # data must be lines separated by '\n'
-# each line must be comma or tab separated variables
-# delim will be ',' or '\t'
-def parseFile(data, delim):
+# each line must be comma separated variables
+def parseFile(data):
+    global variables, timer
+    variables = []      # reset values
+    timer = None
     numLines = 0
     lines = data.split('\n')
     for line in lines:
-        fields = line.strip().split(delim)
+        fields = line.strip().split(',')
         if len(fields) > 1  and  not fields[0].startswith('#'):
             if numLines == 0:       # first line is the header
-                parseHeader(fields)
+                # pick up variable names in header line
+                for col, name in enumerate(fields):     # fields is list of variable names
+                    if name == '':                      # blank?
+                        name = 'variable %s' % col
+                    variable = Variable(name, col)
+                    variables.append(variable)
             else:
-                parseData(fields)
+                for col, value in enumerate(fields):    # fields is list of variable values
+                    if col < len(variables):            # sometimes data has trailing garbage tabs
+                        variable = variables[col]
+                        variable.addValue(value)
             numLines += 1
+        if numLines % 1000 == 0:
+            displayStatus('%s of %s lines read' % (numLines, len(lines)))
+
+    if len(variables) > 0:
+        timer = variables.pop(0)    # sets the timer column variable
+        numLines -= 1
+
+    # compute variable properties
+    for variable in variables:
+        variable.analyze()
     return numLines
 
-# pick up variable names in header line
-def parseHeader(fields):
-    for col, name in enumerate(fields):     # fields is list of variable names
-        if name == '':                      # blank?
-            name = 'variable %s' % col
-        variable = Variable(name, col)
-        variables.append(variable)
-
-def parseData(fields):
-    for col, value in enumerate(fields):    # fields is list of variable values
-        variable = variables[col]
-        variable.addValue(value)
-
+# convert Excel file to CSV
 # booleans get converted to 1 & 0
 # xlrd cannot distinguish between ints and floats
 def parseXLStoCSV(fileName):
@@ -95,102 +120,163 @@ def parseXLStoCSV(fileName):
         data += ','.join(values)+'\n'
     return data
 
-# returns number of variables that can be plotted
-def massageData():
-    for variable in variables:
-        try:
-            variable.max = max(variable.values)
-            variable.min = min(variable.values)
-            sum(variable.values)                # sum will crash if not numeric
-            variable.numeric = True
-        except:
-            pass
-        variable.constant = variable.max == variable.min    # non changing
-        variable.empty = variable.constant  and  variable.max == ''
-
-def displayVars():
-    table = ui.varTable
-    count = sum(1 for variable in variables[1:] if variable.numeric)
+# fill the specified table with variable names
+# there are 2 tables: selected and unselected
+def displayVariables(table, selected, hideInactive):
+    # need to set the row count BEFORE filling the table
+    count = sum(1 for variable in variables if variable.numeric  and  variable.selected == selected  and
+                                                (not hideInactive or not variable.inactive))
     table.setRowCount(count)
     table.setSortingEnabled(False)
     n = 0
-    for variable in variables[1:]:  # skip timer
-        if variable.numeric:
+    for variable in variables:  # skip timer
+        if variable.numeric  and  variable.selected == selected  and    \
+                (not hideInactive or not variable.inactive):
             item = QtGui.QTableWidgetItem()
             item.setCheckState(QtCore.Qt.Checked if variable.selected else QtCore.Qt.Unchecked)
             item.setText(variable.name)
-            if variable.constant:
+            if variable.inactive:
                 item.setTextColor(QtGui.QColor('red'))
-            variable.item = item
+            if variable.color != None:
+                item.setBackgroundColor(QtGui.QColor(*variable.color))
+            variable.items = [ item ]
             table.setItem(n, 0, item)
 
             item = QtGui.QTableWidgetItem()
             item.setText('Min:%s, Max=%s' % (variable.min, variable.max))
+            if variable.color != None:
+                item.setBackgroundColor(QtGui.QColor(*variable.color))
+            variable.items.append(item)
             table.setItem(n, 1, item)
             n += 1
     table.setSortingEnabled(True)
     table.resizeColumnsToContents()
-    table.itemClicked.connect(itemClicked)
+    table.clearSelection()          # restore color from blue (selected)
 
-# a checkbox or variable name in the table was clicked
+# a checkbox or variable name was clicked in a table 
 def itemClicked(item):
-    for variable in variables:      # find item that was clicked
-        if variable.item == item:
+    for variable in variables:  # find item that was clicked
+        if variable.items != None  and  item in variable.items: # non numeric variables not displayed
             break
     else:
-        print 'itemClicked: item not found!!!'
+        displayStatus('Please click on a variable')
         return
-    variable.selected = not variable.selected
-    item.setCheckState(QtCore.Qt.Checked if variable.selected else QtCore.Qt.Unchecked)
-    displayPlot()
+    if variable.selected:
+        variable.selected = False
+        colors.append(variable.color)   # return color to end of list of available colors
+        variable.color = None
+    else:
+        if len(colors) <= 0:
+            displayStatus('You are viewing too many variables.  Kindly restrain yourself.')
+            return
+        variable.selected = True
+        variable.color = colors.pop()   # get last color
+    displayAll()
 
+def checkedStateChanged(item):
+    hideInactive = ui.checkBoxHideInactive.isChecked()
+    displayVariables(table=ui.varUnselectedTable, selected=False, hideInactive=hideInactive)
+
+# plot all selected variables
 def displayPlot():
     widget.clear()      # erase previous plots
-    count = sum(1 for variable in variables[1:] if variable.selected)
-    i = 0
-    for variable in variables[1:]:    # skip first
+    for variable in variables:    # skip first
         if variable.selected:
-            widget.plot(variables[0].values, variable.values, name=variable.name, pen=(i, count))
-            i += 1
+            widget.plot(timer.values, variable.values, name=variable.name, pen=variable.color)
+
+# displays plot and variable tables
+def displayAll():
+    displayPlot()
+    displayVariables(table=ui.varSelectedTable, selected=True, hideInactive=False)
+    hideInactive = ui.checkBoxHideInactive.isChecked()
+    displayVariables(table=ui.varUnselectedTable, selected=False, hideInactive=hideInactive)
+
+# display line in status bar at bottom of screen
+def displayStatus(msg):
+    mainWindow.statusBar().showMessage(msg)
+
+def connectAll():
+    ui.varSelectedTable.itemClicked.connect(itemClicked)
+    ui.varUnselectedTable.itemClicked.connect(itemClicked)
+    ui.checkBoxHideInactive.stateChanged.connect(checkedStateChanged)
+    QtCore.QObject.connect(ui.actionExit, QtCore.SIGNAL('triggered()'), sysExit)
+    QtCore.QObject.connect(ui.actionOpen_File, QtCore.SIGNAL('triggered()'), openFile)
+    QtCore.QObject.connect(ui.actionAbout, QtCore.SIGNAL('triggered()'), about)
+    QtCore.QObject.connect(ui.actionGeneral_Help, QtCore.SIGNAL('triggered()'), generalHelp)
+    QtCore.QObject.connect(ui.actionHelp_with_Plots, QtCore.SIGNAL('triggered()'), helpWithPlots)
+
+# returns CSV data
+def readFile(filename):
+    parts = filename.lower().rsplit('.', 1) # convert .XLS to .xls
+    extension = parts[-1]
+    if extension in ['xls', 'xlsx']:
+        data = parseXLStoCSV(filename)  # convert XLS to CSV
+    else:   # must be CSV/TSV file
+        with open(filename, 'r') as f:
+            data = f.read()             # read in the whole file
+
+        if extension == 'tsv':          # tab separated values
+            data = data.replace('\t', ',')
+    return data
+
+# prompt user for filename
+def getFileName():
+    fileExts = '*.csv *.tsv *.xls *.xlsx'
+    filename = QtGui.QFileDialog.getOpenFileName(None, 'Open log file', '', 'Files (%s)' % fileExts)
+    if filename in [None, '']:      # cancelled
+        return None
+    return str(filename)            # convert qstring to str
+
+# menu pick item
+def openFile():
+    filename = getFileName()                # prompt user for filename
+    if filename != None:                    # cancelled?
+        data = readFile(filename)           # returns CSV file
+        numLines = parseFile(data)          # parse data into Variables
+        displayStatus('File: %s, %s lines' % (filename, numLines))
+        displayAll()
+
+# menu pick item
+def about():
+    displayStatus('TelemetryPlot: Version %s  Cue Group' % version.versionDate)
+
+def generalHelp():
+    webbrowser.open('generalHelp.html', new=0, autoraise=True)
+
+def helpWithPlots():
+    webbrowser.open('helpWithPlots.html', new=0, autoraise=True)
+
+# menu pick item
+def sysExit():
+    sys.exit()
 
 def main():
+    global mainWindow, ui, widget
     app = QtGui.QApplication(sys.argv)
     mainWindow =  QtGui.QMainWindow()
-    global ui
     ui = uiPlotView.Ui_MainWindow()
     ui.setupUi(mainWindow)
 
     ag = app.desktop().availableGeometry(-1)
     mainWindow.resize(ag.width()-10, ag.height()-40)   # magic val for windows app bar
 
-    global widget
     widget = pg.PlotWidget()
     ui.plotLayout.addWidget(widget)
     widget.showGrid(x=True, y=True, alpha=0.6)
+    connectAll()
 
     if len(sys.argv) > 1:
         filename = sys.argv[1]          # command line param
     else:
-        fileExts = '*.csv *.tsv *.xls *.xlsx'
-        filename = QtGui.QFileDialog.getOpenFileName(None, 'Open log file', '', 'Files (%s)' % fileExts)
-        if filename in [None, '']:      # cancelled
-            sys.exit()
-        filename = str(filename)        # convert qstring to str
-    
-    parts = filename.lower().rsplit('.', 1) # convert .XLS to .xls
-    if parts[-1] in ['xls', 'xlsx']:
-        data = parseXLStoCSV(filename)  # convert to CSV
-        delim = ','
-    else:   # must be CSV/TSV file
-        with open(filename, 'r') as f:
-            data = f.read()             # read in the whole file
-        delim = ',' if parts[-1] == 'csv' else '\t'
+        filename = getFileName()
+        if filename == None:            # cancelled
+            sysExit()
 
-    numLines = parseFile(data, delim)
-    ui.fileProperties.setText('File: %s, %s lines' % (filename, numLines))
-    massageData()
-    displayVars()
-    displayPlot()
+    data = readFile(filename)
+    numLines = parseFile(data)
+    displayStatus('File: %s, %s lines' % (filename, numLines))
+    displayAll()
+
     mainWindow.show()
     sys.exit(app.exec_())
 
