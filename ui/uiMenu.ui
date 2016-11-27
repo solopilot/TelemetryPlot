@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindowMenu</class>
+ <widget class="QMainWindow" name="MainWindowMenu">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1024</width>
+    <height>724</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidgetMenu"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1024</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpen_File"/>
+    <addaction name="separator"/>
+    <addaction name="actionPrint"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+    <addaction name="separator"/>
+    <addaction name="actionCut"/>
+    <addaction name="actionCopy"/>
+    <addaction name="actionPaste"/>
+    <addaction name="actionDelete"/>
+    <addaction name="actionSelect_All"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionConfigure"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="toolTip">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSummary">
+   <property name="text">
+    <string>Summary Screen</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Undo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Redo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
+   </property>
+  </action>
+  <action name="actionCut">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Cut</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+X</string>
+   </property>
+  </action>
+  <action name="actionCopy">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Copy</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionPaste">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Paste</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="actionDelete">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="actionSelect_All">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Select All</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
+   </property>
+  </action>
+  <action name="actionPrint">
+   <property name="text">
+    <string>Print...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionEditUsers">
+   <property name="text">
+    <string>Users</string>
+   </property>
+  </action>
+  <action name="actionSelectAwards">
+   <property name="text">
+    <string>Awards</string>
+   </property>
+  </action>
+  <action name="actionPeriods">
+   <property name="text">
+    <string>Periods</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About...</string>
+   </property>
+  </action>
+  <action name="actionTracking">
+   <property name="text">
+    <string>Judge Tracking</string>
+   </property>
+  </action>
+  <action name="actionMakePitMap">
+   <property name="text">
+    <string>Make Pit Map</string>
+   </property>
+  </action>
+  <action name="actionEvents">
+   <property name="text">
+    <string>Events</string>
+   </property>
+  </action>
+  <action name="actionPit_map">
+   <property name="text">
+    <string>Pit map</string>
+   </property>
+  </action>
+  <action name="actionConfigure">
+   <property name="text">
+    <string>Configure</string>
+   </property>
+  </action>
+  <action name="actionJudgeGroups">
+   <property name="text">
+    <string>Judge Groups</string>
+   </property>
+  </action>
+  <action name="actionInspections">
+   <property name="text">
+    <string>Inspections</string>
+   </property>
+  </action>
+  <action name="actionAssignTasks">
+   <property name="text">
+    <string>Assigned tasks</string>
+   </property>
+  </action>
+  <action name="actionUserGroups">
+   <property name="text">
+    <string>Channels</string>
+   </property>
+  </action>
+  <action name="actionTouchToTalk">
+   <property name="text">
+    <string>Messages</string>
+   </property>
+  </action>
+  <action name="actionImport_user_list">
+   <property name="text">
+    <string>Import User List</string>
+   </property>
+  </action>
+  <action name="actionImport_match_schedule">
+   <property name="text">
+    <string>Import Match Schedule</string>
+   </property>
+  </action>
+  <action name="actionTeams">
+   <property name="text">
+    <string>Teams</string>
+   </property>
+  </action>
+  <action name="actionUpload_State">
+   <property name="text">
+    <string>Upload State</string>
+   </property>
+  </action>
+  <action name="actionMake_fake_match_schedule">
+   <property name="text">
+    <string>Make fake match schedule</string>
+   </property>
+  </action>
+  <action name="actionExport_Match_Notes">
+   <property name="text">
+    <string>Export Match Notes</string>
+   </property>
+  </action>
+  <action name="actionCreateNotificationFor_event">
+   <property name="text">
+    <string>Publish Notification</string>
+   </property>
+  </action>
+  <action name="actionMake_SSL_keys">
+   <property name="text">
+    <string>Make SSL keys</string>
+   </property>
+  </action>
+  <action name="actionQR_File">
+   <property name="text">
+    <string>Tablet Setup QR</string>
+   </property>
+  </action>
+  <action name="actionDownload_Updates">
+   <property name="text">
+    <string>Download Updates</string>
+   </property>
+  </action>
+  <action name="actionErase_match_schedule">
+   <property name="text">
+    <string>Erase match schedule</string>
+   </property>
+  </action>
+  <action name="actionDeliberation">
+   <property name="text">
+    <string>Deliberation</string>
+   </property>
+  </action>
+  <action name="actionQR_WebPage">
+   <property name="text">
+    <string>Web Page QR</string>
+   </property>
+  </action>
+  <action name="actionExport_Inspections">
+   <property name="text">
+    <string>Export Pit Checklist</string>
+   </property>
+  </action>
+  <action name="actionImport_from_USB">
+   <property name="text">
+    <string>Import from Android</string>
+   </property>
+  </action>
+  <action name="actionImport_event">
+   <property name="text">
+    <string>Import Teams for Event</string>
+   </property>
+  </action>
+  <action name="actionImport_new_teams">
+   <property name="text">
+    <string>Import New Teams</string>
+   </property>
+  </action>
+  <action name="actionExport_to_USB">
+   <property name="text">
+    <string>Export State to Android</string>
+   </property>
+  </action>
+  <action name="actionExport_Inspection_Log">
+   <property name="text">
+    <string>Export Inspection Log</string>
+   </property>
+  </action>
+  <action name="actionTeam_Scores">
+   <property name="text">
+    <string>Team Scores</string>
+   </property>
+  </action>
+  <action name="actionExport_Team_Notes">
+   <property name="text">
+    <string>Export Team Notes</string>
+   </property>
+  </action>
+  <action name="actionOpen_File">
+   <property name="text">
+    <string>Open File...</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

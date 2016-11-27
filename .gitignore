@@ -1,0 +1,8 @@
+.settings/
+Archive/
+build/
+demo/
+dist/
+*.pyc
+ui/*.pyc
+new/*
