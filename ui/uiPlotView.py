@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui\uiPlotView.ui'
 #
-# Created: Sat Nov 26 21:09:00 2016
+# Created: Sat Nov 26 22:45:21 2016
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(1024, 724)
+        MainWindow.resize(1024, 661)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -95,20 +95,18 @@ class Ui_MainWindow(object):
         item = QtGui.QTableWidgetItem()
         self.varTable.setHorizontalHeaderItem(2, item)
         self.verticalLayout.addWidget(self.varTable)
-        spacerItem = QtGui.QSpacerItem(20, 28, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem)
         self.horizontalLayoutButtons = QtGui.QHBoxLayout()
         self.horizontalLayoutButtons.setObjectName(_fromUtf8("horizontalLayoutButtons"))
-        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayoutButtons.addItem(spacerItem1)
+        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayoutButtons.addItem(spacerItem)
         self.buttonAudit = QtGui.QPushButton(self.centralwidget)
         self.buttonAudit.setObjectName(_fromUtf8("buttonAudit"))
         self.horizontalLayoutButtons.addWidget(self.buttonAudit)
         self.buttonCancel = QtGui.QPushButton(self.centralwidget)
         self.buttonCancel.setObjectName(_fromUtf8("buttonCancel"))
         self.horizontalLayoutButtons.addWidget(self.buttonCancel)
-        spacerItem2 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayoutButtons.addItem(spacerItem2)
+        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayoutButtons.addItem(spacerItem1)
         self.verticalLayout.addLayout(self.horizontalLayoutButtons)
         self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)

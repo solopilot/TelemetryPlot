@@ -16,8 +16,9 @@ import version
 # globals
 variables = []      # list of Variables, all recorded data is read in here
 ui = None
-
-
+widget = None
+colors = [(255, 0, 0), (255, 153, 51), (255, 204, 153), (255, 255, 153), (204, 255, 153), (0, 255, 0), 
+          (204, 255, 229), (0, 128, 255), (178, 102, 255)]
 
 # Variable represents one column in the recorded data
 class Variable:
@@ -31,6 +32,7 @@ class Variable:
         self.constant = True    # is the value changing or not
         self.selected = False   # true if checkbox is checked
         self.item = None        # checkbox item with variable's name
+        self.color = None       # index into colors[]
 
     # value is a string
     def addValue(self, value):
@@ -130,8 +132,9 @@ def displayVars():
     table.resizeColumnsToContents()
     table.itemClicked.connect(itemClicked)
 
+# a checkbox or variable name in the table was clicked
 def itemClicked(item):
-    for variable in variables:
+    for variable in variables:      # find item that was clicked
         if variable.item == item:
             break
     else:
@@ -142,7 +145,7 @@ def itemClicked(item):
     displayPlot()
 
 def displayPlot():
-    widget.clear()
+    widget.clear()      # erase previous plots
     count = sum(1 for variable in variables[1:] if variable.selected)
     i = 0
     for variable in variables[1:]:    # skip first
@@ -150,33 +153,35 @@ def displayPlot():
             widget.plot(variables[0].values, variable.values, name=variable.name, pen=(i, count))
             i += 1
 
-#####################
-if __name__ == "__main__":
+def main():
     app = QtGui.QApplication(sys.argv)
     mainWindow =  QtGui.QMainWindow()
+    global ui
     ui = uiPlotView.Ui_MainWindow()
     ui.setupUi(mainWindow)
 
+    ag = app.desktop().availableGeometry(-1)
+    mainWindow.resize(ag.width()-10, ag.height()-40)   # magic val for windows app bar
+
+    global widget
     widget = pg.PlotWidget()
     ui.plotLayout.addWidget(widget)
     widget.showGrid(x=True, y=True, alpha=0.6)
 
-    pg.setConfigOptions(antialias=True) # Enable antialiasing for prettier plots
-
     if len(sys.argv) > 1:
-        filename = sys.argv[1]
+        filename = sys.argv[1]          # command line param
     else:
         fileExts = '*.csv *.tsv *.xls *.xlsx'
         filename = QtGui.QFileDialog.getOpenFileName(None, 'Open log file', '', 'Files (%s)' % fileExts)
         if filename in [None, '']:      # cancelled
             sys.exit()
         filename = str(filename)        # convert qstring to str
-
+    
     parts = filename.lower().rsplit('.', 1) # convert .XLS to .xls
     if parts[-1] in ['xls', 'xlsx']:
         data = parseXLStoCSV(filename)  # convert to CSV
         delim = ','
-    else:   # must be CSV file
+    else:   # must be CSV/TSV file
         with open(filename, 'r') as f:
             data = f.read()             # read in the whole file
         delim = ',' if parts[-1] == 'csv' else '\t'
@@ -188,3 +193,7 @@ if __name__ == "__main__":
     displayPlot()
     mainWindow.show()
     sys.exit(app.exec_())
+
+#####################
+if __name__ == "__main__":
+    main()
