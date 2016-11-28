@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui\uiPlotView.ui'
 #
-# Created: Sun Nov 27 15:00:01 2016
+# Created: Sun Nov 27 21:51:40 2016
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -188,19 +188,23 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
         self.labelTitle.setText(_translate("MainWindow", "Telemetry Log Viewer", None))
         self.labelTitle_2.setText(_translate("MainWindow", "Displayed variables", None))
+        self.checkBox_2.setToolTip(_translate("MainWindow", "<html><head/><body><p>Come back later for this</p></body></html>", None))
         self.checkBox_2.setText(_translate("MainWindow", "Animate", None))
+        self.varSelectedTable.setToolTip(_translate("MainWindow", "<html><head/><body><p>Click on a variable to remove it from the display list.  The color of each variable is the color of the variable\'s plot line.</p></body></html>", None))
         item = self.varSelectedTable.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Variable", None))
         item = self.varSelectedTable.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Properties", None))
         self.labelTitle_3.setText(_translate("MainWindow", "Available to display", None))
+        self.checkBoxHideInactive.setToolTip(_translate("MainWindow", "<html><head/><body><p>Inactive variables are those that do not change.  They are colored red.</p></body></html>", None))
         self.checkBoxHideInactive.setText(_translate("MainWindow", "Hide Inactive", None))
+        self.varUnselectedTable.setToolTip(_translate("MainWindow", "<html><head/><body><p>Click on a variable to display it.  Inactive variabled are colored red.  They do not change values.</p></body></html>", None))
         item = self.varUnselectedTable.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Variable", None))
         item = self.varUnselectedTable.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Properties", None))
-        self.buttonReset.setToolTip(_translate("MainWindow", "<html><head/><body><p>Return to previous screen</p></body></html>", None))
-        self.buttonReset.setText(_translate("MainWindow", "Reset", None))
+        self.buttonReset.setToolTip(_translate("MainWindow", "<html><head/><body><p>Click Reset to adjust axis scales to display all plots.</p></body></html>", None))
+        self.buttonReset.setText(_translate("MainWindow", "Reset Plot", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuHelp.setTitle(_translate("MainWindow", "Help", None))
         self.actionOpen_File.setText(_translate("MainWindow", "Open File...", None))
