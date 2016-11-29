@@ -214,6 +214,7 @@ def connectAll():
     ui.varUnselectedTable.itemClicked.connect(itemClicked)
     ui.checkBoxHideInactive.stateChanged.connect(checkedStateChanged)
     QtCore.QObject.connect(ui.buttonReset, QtCore.SIGNAL('clicked()'), buttonReset)
+    QtCore.QObject.connect(ui.buttonCompressY, QtCore.SIGNAL('clicked()'), buttonCompressY)
     QtCore.QObject.connect(ui.actionExit, QtCore.SIGNAL('triggered()'), sysExit)
     QtCore.QObject.connect(ui.actionOpen_File, QtCore.SIGNAL('triggered()'), openFile)
     QtCore.QObject.connect(ui.actionAbout, QtCore.SIGNAL('triggered()'), about)
@@ -265,8 +266,12 @@ def helpWithPlots():
 def sysExit():
     sys.exit()
 
+def buttonCompressY():
+    widget.setLogMode(False, True)
+
 def buttonReset():
     widget.autoRange()
+    widget.setLogMode(False, False)
 
 def main():
     global mainWindow, ui, widget
@@ -281,6 +286,7 @@ def main():
     widget = pg.PlotWidget()
     ui.plotLayout.addWidget(widget)
     widget.showGrid(x=True, y=True, alpha=0.6)
+    widget.setLabel('bottom', 'Time', 'Sec')
     connectAll()
 
     if len(sys.argv) > 1:

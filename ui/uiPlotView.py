@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui\uiPlotView.ui'
 #
-# Created: Sun Nov 27 21:51:40 2016
+# Created: Mon Nov 28 07:53:08 2016
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -63,6 +63,19 @@ class Ui_MainWindow(object):
         self.plotLayout = QtGui.QVBoxLayout()
         self.plotLayout.setObjectName(_fromUtf8("plotLayout"))
         self.verticalLayout_3.addLayout(self.plotLayout)
+        self.horizontalLayoutButtons = QtGui.QHBoxLayout()
+        self.horizontalLayoutButtons.setObjectName(_fromUtf8("horizontalLayoutButtons"))
+        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayoutButtons.addItem(spacerItem)
+        self.buttonCompressY = QtGui.QPushButton(self.centralwidget)
+        self.buttonCompressY.setObjectName(_fromUtf8("buttonCompressY"))
+        self.horizontalLayoutButtons.addWidget(self.buttonCompressY)
+        self.buttonReset = QtGui.QPushButton(self.centralwidget)
+        self.buttonReset.setObjectName(_fromUtf8("buttonReset"))
+        self.horizontalLayoutButtons.addWidget(self.buttonReset)
+        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayoutButtons.addItem(spacerItem1)
+        self.verticalLayout_3.addLayout(self.horizontalLayoutButtons)
         self.lineSeparator_2 = QtGui.QFrame(self.centralwidget)
         self.lineSeparator_2.setFrameShape(QtGui.QFrame.HLine)
         self.lineSeparator_2.setFrameShadow(QtGui.QFrame.Sunken)
@@ -136,16 +149,6 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.varUnselectedTable)
         self.horizontalLayout_3.addLayout(self.verticalLayout)
         self.verticalLayout_3.addLayout(self.horizontalLayout_3)
-        self.horizontalLayoutButtons = QtGui.QHBoxLayout()
-        self.horizontalLayoutButtons.setObjectName(_fromUtf8("horizontalLayoutButtons"))
-        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayoutButtons.addItem(spacerItem)
-        self.buttonReset = QtGui.QPushButton(self.centralwidget)
-        self.buttonReset.setObjectName(_fromUtf8("buttonReset"))
-        self.horizontalLayoutButtons.addWidget(self.buttonReset)
-        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayoutButtons.addItem(spacerItem1)
-        self.verticalLayout_3.addLayout(self.horizontalLayoutButtons)
         self.gridLayout.addLayout(self.verticalLayout_3, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
@@ -187,6 +190,10 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
         self.labelTitle.setText(_translate("MainWindow", "Telemetry Log Viewer", None))
+        self.buttonCompressY.setToolTip(_translate("MainWindow", "<html><head/><body><p>Click Reset to adjust axis scales to display all plots.</p></body></html>", None))
+        self.buttonCompressY.setText(_translate("MainWindow", "Compress Y Axis", None))
+        self.buttonReset.setToolTip(_translate("MainWindow", "<html><head/><body><p>Click Reset to adjust axis scales to display all plots.</p></body></html>", None))
+        self.buttonReset.setText(_translate("MainWindow", "Reset Plot", None))
         self.labelTitle_2.setText(_translate("MainWindow", "Displayed variables", None))
         self.checkBox_2.setToolTip(_translate("MainWindow", "<html><head/><body><p>Come back later for this</p></body></html>", None))
         self.checkBox_2.setText(_translate("MainWindow", "Animate", None))
@@ -203,8 +210,6 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Variable", None))
         item = self.varUnselectedTable.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Properties", None))
-        self.buttonReset.setToolTip(_translate("MainWindow", "<html><head/><body><p>Click Reset to adjust axis scales to display all plots.</p></body></html>", None))
-        self.buttonReset.setText(_translate("MainWindow", "Reset Plot", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuHelp.setTitle(_translate("MainWindow", "Help", None))
         self.actionOpen_File.setText(_translate("MainWindow", "Open File...", None))
