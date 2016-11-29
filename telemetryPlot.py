@@ -10,7 +10,7 @@ xlrd does not distinguish between float and ints
 also, pyqtgraph displays arrays of floats, so everything is in float
 '''
 from PyQt4 import QtGui, QtCore
-#import pyqtgraph as pg
+import pyqtgraph as pg
 import sys
 import webbrowser               # to display help files
 from ui import uiPlotView       # ui screen built by QT Designer
@@ -40,6 +40,7 @@ class Variable:
         self.inactive = True    # is the value changing or not
         self.selected = False   # true if checkbox is checked
         self.color = None       # color of row & plot. value from availColors[], when selected
+        self.plot = None        # 
         self.items = []         # list of display items associated with variable's name
 
     # input param 'value' is a string; add it to list of values[]
@@ -186,12 +187,15 @@ def itemClicked(item):
         variable.selected = False
         availColors.append(variable.color)      # return color to end of list of available availColors
         variable.color = None
+        variable.plot = None        # kill any axis
     else:
         if len(availColors) <= 0:
             displayStatus('You are viewing too many variables.  Kindly restrain yourself :-)')
             return
         variable.selected = True
         variable.color = availColors.pop()      # get last color
+        if not variable.numeric:                # variable has text values
+            variable.plot = 1
     displayAll()		# update both tables and plot
 
 # "Hide Inactive" checkbox was clicked
@@ -199,13 +203,39 @@ def checkedStateChanged(item=None):
     hideInactive = ui.checkBoxHideInactive.isChecked()
     displayVariables(table=ui.varUnselectedTable, selected=False, hideInactive=hideInactive)
 
+# Handle view resizing
+def updateViews():
+    ## view has resized; update auxiliary views to match
+    for variable in variables:
+        if variable.plot != None:
+            variable.plot.setGeometry(widget.plotItem.vb.sceneBoundingRect())
+
+            ## need to re-update linked axes since this was called
+            ## incorrectly while views had different shapes.
+            ## (probably this should be handled in ViewBox.resizeEvent)
+            variable.plot.linkedViewChanged(widget.plotItem.vb, variable.plot.XAxis)
+
 # plot all selected variables
 def displayPlot():
     widget.clear()      # erase previous plots
     if timer != None:   # timer will be none if no file data is available, typically when bad file opened
         for variable in variables:
             if variable.selected:
-                widget.plot(timer.values, variable.displayValues, name=variable.name, pen=variable.color)
+                if variable.plot == None:   # use the base display item
+                    widget.plot(timer.values, variable.displayValues, name=variable.name, pen=variable.color)
+                else:
+                    # create an axis for this variable
+                    vb = pg.ViewBox()
+                    axis = pg.AxisItem('right')
+                    pitem = widget.getPlotItem()        # same as widget.plotItem
+                    pitem.layout.addItem(axis, 2, 3)    # QGraphicsGridLayout(item, row, col) it has 4,3
+                    pitem.scene().addItem(vb)           # add to pyqtgraph.GraphicsScene
+                    axis.linkToView(vb)
+                    vb.setXLink(pitem)
+                    #axis.setZValue(-10000)
+                    axis.setLabel(variable.name, color='#ff0000')
+                    vb.setGeometry(pitem.vb.sceneBoundingRect())
+                    vb.addItem(pg.PlotCurveItem(timer.values, variable.displayValues, name=variable.name, pen=variable.color))
 
 # displays plot and variable tables
 def displayAll():
@@ -231,7 +261,7 @@ def connectAll():
     QtCore.QObject.connect(ui.actionAbout, QtCore.SIGNAL('triggered()'), about)
     QtCore.QObject.connect(ui.actionGeneral_Help, QtCore.SIGNAL('triggered()'), generalHelp)
     QtCore.QObject.connect(ui.actionHelp_with_Plots, QtCore.SIGNAL('triggered()'), helpWithPlots)
-    #widget.plotItem.vb.sigResized.connect(updateViews)
+    widget.plotItem.vb.sigResized.connect(updateViews)
 
 # returns CSV data
 def readFile(filename):
