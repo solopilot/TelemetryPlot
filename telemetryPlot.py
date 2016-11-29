@@ -10,7 +10,7 @@ xlrd does not distinguish between float and ints
 also, pyqtgraph displays arrays of floats, so everything is in float
 '''
 from PyQt4 import QtGui, QtCore
-import pyqtgraph as pg
+#import pyqtgraph as pg
 import sys
 import webbrowser               # to display help files
 from ui import uiPlotView       # ui screen built by QT Designer
@@ -33,12 +33,13 @@ class Variable:
         self.column = column    # column index
         self.numeric = False    # plottable
         self.values = []        # list of recorded values for this variable
+        self.displayValues = [] # nonnumeric values are converted to integers
         self.max = ''           # max value: empty
         self.min = ''
-        self.set = None         # set of unique values for non numeric variables
+        self.list = []          # list of unique values for non numeric variables
         self.inactive = True    # is the value changing or not
         self.selected = False   # true if checkbox is checked
-        self.color = None       # value from availColors[], when selected
+        self.color = None       # color of row & plot. value from availColors[], when selected
         self.items = []         # list of display items associated with variable's name
 
     # input param 'value' is a string; add it to list of values[]
@@ -54,12 +55,18 @@ class Variable:
         try:
             sum(self.values)    # sum will crash if not numeric
             self.numeric = True
+            self.displayValues = self.values    # same as values
             self.max = max(self.values)
             self.min = min(self.values)
+            self.inactive = self.max == self.min    # non changing
         except:
             self.numeric = False
-            self.set = set(self.values)     # set of unique values
-        self.inactive = self.max == self.min    # non changing
+            # convert string values into list indices
+            for val in self.values:
+                if val not in self.list:
+                    self.list.append(val)           # list of unique values, in order of appearance
+                self.displayValues.append(self.list.index(val))
+            self.inactive = len(self.list) <= 1     # non changing
 
 # parse CSV data that was previously read in and set up globals variables[] and timer
 # data must be lines separated by '\n'
@@ -134,13 +141,13 @@ def parseXLStoCSV(fileName):
 # there are 2 tables: selected and unselected
 def displayVariables(table, selected, hideInactive):
     # need to set the row count BEFORE filling the table
-    count = sum(1 for variable in variables if variable.numeric  and  variable.selected == selected  and
+    count = sum(1 for variable in variables if variable.selected == selected  and
                                                 (not hideInactive or not variable.inactive))
     table.setRowCount(count)
     table.setSortingEnabled(False)
     n = 0
     for variable in variables:
-        if variable.numeric  and  variable.selected == selected  and    \
+        if variable.selected == selected  and    \
                 (not hideInactive or not variable.inactive):
             item = QtGui.QTableWidgetItem()
             item.setCheckState(QtCore.Qt.Checked if variable.selected else QtCore.Qt.Unchecked)
@@ -153,15 +160,19 @@ def displayVariables(table, selected, hideInactive):
             table.setItem(n, 0, item)
 
             item = QtGui.QTableWidgetItem()
-            item.setText('Min:%s, Max=%s' % (variable.min, variable.max))
+            if variable.numeric:
+                props = 'Min:%s, Max=%s' % (variable.min, variable.max)
+            else:
+                props = 'Text with %s values' % len(variable.list)
+            item.setText(props)
             if variable.color != None:
                 item.setBackgroundColor(QtGui.QColor(*variable.color))
             variable.items.append(item)
             table.setItem(n, 1, item)
             n += 1
+    table.clearSelection()          # restore color from blue (selected)
     table.setSortingEnabled(True)
     table.resizeColumnsToContents()
-    table.clearSelection()          # restore color from blue (selected)
 
 # a checkbox or variable name was clicked in a table 
 def itemClicked(item):
@@ -191,10 +202,10 @@ def checkedStateChanged(item=None):
 # plot all selected variables
 def displayPlot():
     widget.clear()      # erase previous plots
-    if timer != None:
-        for variable in variables:    # skip first
+    if timer != None:   # timer will be none if no file data is available, typically when bad file opened
+        for variable in variables:
             if variable.selected:
-                widget.plot(timer.values, variable.values, name=variable.name, pen=variable.color)
+                widget.plot(timer.values, variable.displayValues, name=variable.name, pen=variable.color)
 
 # displays plot and variable tables
 def displayAll():
@@ -220,6 +231,7 @@ def connectAll():
     QtCore.QObject.connect(ui.actionAbout, QtCore.SIGNAL('triggered()'), about)
     QtCore.QObject.connect(ui.actionGeneral_Help, QtCore.SIGNAL('triggered()'), generalHelp)
     QtCore.QObject.connect(ui.actionHelp_with_Plots, QtCore.SIGNAL('triggered()'), helpWithPlots)
+    #widget.plotItem.vb.sigResized.connect(updateViews)
 
 # returns CSV data
 def readFile(filename):
@@ -236,7 +248,7 @@ def readFile(filename):
 # prompt user for filename
 def getFileName():
     fileExts = '*.csv *.tsv *.xls *.xlsx'
-    filename = QtGui.QFileDialog.getOpenFileName(None, 'Open log file', '', 'Files (%s)' % fileExts)
+    filename = QtGui.QFileDialog.getOpenFileName(None, 'TelemetryPlot: Open log file', '', 'Files (%s)' % fileExts)
     if filename in [None, '']:      # cancelled
         return None
     return str(filename)            # convert qstring to str
@@ -266,9 +278,17 @@ def helpWithPlots():
 def sysExit():
     sys.exit()
 
+# button for compress Y axis
 def buttonCompressY():
-    widget.setLogMode(False, True)
+    return  # disabled, causes divide by 0 exceptions
+    if ui.buttonCompressY.text() == 'Compress Y Axis':
+        widget.setLogMode(False, True)
+        ui.buttonCompressY.setText('Restore Y Axis')
+    else:   # Restore Y Axis
+        widget.setLogMode(False, False)
+        ui.buttonCompressY.setText('Compress Y Axis')
 
+# button for Reset Plot
 def buttonReset():
     widget.autoRange()
     widget.setLogMode(False, False)
@@ -283,10 +303,17 @@ def main():
     ag = app.desktop().availableGeometry(-1)
     mainWindow.resize(ag.width()-10, ag.height()-40)   # magic val for windows app bar
 
-    widget = pg.PlotWidget()
-    ui.plotLayout.addWidget(widget)
-    widget.showGrid(x=True, y=True, alpha=0.6)
+    # to create ui.plotWidget, see
+    #        http://www.pyqtgraph.org/documentation/how_to_use.html#embedding-widgets-inside-pyqt-applications
+    # In Designer, create a QGraphicsView widget ("Graphics View" under the "Display Widgets" category).
+    # Right-click on the QGraphicsView and select "Promote To...".
+    # Under "Promoted class name", enter the class name you wish to use ("PlotWidget", "GraphicsLayoutWidget", etc).
+    # Under "Header file", enter "pyqtgraph".
+    # Click "Add", then click "Promote".
+    widget = ui.plotWidget
+    widget.showGrid(x=True, y=True, alpha=0.75)
     widget.setLabel('bottom', 'Time', 'Sec')
+    widget.setLabels(left='Numeric Y Value')
     connectAll()
 
     if len(sys.argv) > 1:

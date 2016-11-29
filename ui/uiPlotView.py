@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui\uiPlotView.ui'
 #
-# Created: Mon Nov 28 07:53:08 2016
+# Created: Tue Nov 29 18:09:34 2016
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -60,9 +60,9 @@ class Ui_MainWindow(object):
         self.lineSeparator_3.setFrameShadow(QtGui.QFrame.Sunken)
         self.lineSeparator_3.setObjectName(_fromUtf8("lineSeparator_3"))
         self.verticalLayout_3.addWidget(self.lineSeparator_3)
-        self.plotLayout = QtGui.QVBoxLayout()
-        self.plotLayout.setObjectName(_fromUtf8("plotLayout"))
-        self.verticalLayout_3.addLayout(self.plotLayout)
+        self.plotWidget = PlotWidget(self.centralwidget)
+        self.plotWidget.setObjectName(_fromUtf8("plotWidget"))
+        self.verticalLayout_3.addWidget(self.plotWidget)
         self.horizontalLayoutButtons = QtGui.QHBoxLayout()
         self.horizontalLayoutButtons.setObjectName(_fromUtf8("horizontalLayoutButtons"))
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
@@ -135,6 +135,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(14)
         self.checkBoxHideInactive.setFont(font)
+        self.checkBoxHideInactive.setChecked(True)
         self.checkBoxHideInactive.setObjectName(_fromUtf8("checkBoxHideInactive"))
         self.horizontalLayout.addWidget(self.checkBoxHideInactive)
         self.verticalLayout.addLayout(self.horizontalLayout)
@@ -190,7 +191,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
         self.labelTitle.setText(_translate("MainWindow", "Telemetry Log Viewer", None))
-        self.buttonCompressY.setToolTip(_translate("MainWindow", "<html><head/><body><p>Click Reset to adjust axis scales to display all plots.</p></body></html>", None))
+        self.buttonCompressY.setToolTip(_translate("MainWindow", "<html><head/><body><p>Make Y Axis Log10</p></body></html>", None))
         self.buttonCompressY.setText(_translate("MainWindow", "Compress Y Axis", None))
         self.buttonReset.setToolTip(_translate("MainWindow", "<html><head/><body><p>Click Reset to adjust axis scales to display all plots.</p></body></html>", None))
         self.buttonReset.setText(_translate("MainWindow", "Reset Plot", None))
@@ -219,3 +220,4 @@ class Ui_MainWindow(object):
         self.actionGeneral_Help.setText(_translate("MainWindow", "General Help", None))
         self.actionHelp_with_Plots.setText(_translate("MainWindow", "Help with Plots", None))
 
+from pyqtgraph import PlotWidget

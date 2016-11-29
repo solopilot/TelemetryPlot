@@ -61,7 +61,7 @@
        </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="plotLayout"/>
+       <widget class="PlotWidget" name="plotWidget"/>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayoutButtons">
@@ -218,6 +218,9 @@
               <property name="text">
                <string>Hide Inactive</string>
               </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
              </widget>
             </item>
            </layout>
@@ -308,6 +311,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
