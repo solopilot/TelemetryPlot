@@ -39,9 +39,13 @@ class Variable:
         self.list = []          # list of unique values for non numeric variables
         self.inactive = True    # is the value changing or not
         self.selected = False   # true if checkbox is checked
-        self.color = None       # color of row & plot. value from availColors[], when selected
+        self.color = None       # color of variable & plot. value from availColors[], when selected
         self.plot = None        # 
         self.items = []         # list of display items associated with variable's name
+        if name == 'AD Program':
+            print name, 'selected'
+            self.selected = True
+            self.color = availColors.pop()
 
     # input param 'value' is a string; add it to list of values[]
     def addValue(self, value):
@@ -96,7 +100,7 @@ def parseFile(data):
                         variable = variables[col]
                         variable.addValue(value)
             numLines += 1
-        if numLines % 1000 == 0:
+        if numLines % 1000 == 0:                        # updates for the impatient
             displayStatus('%s of %s lines read' % (numLines, len(lines)))
 
     # compute variable properties
@@ -108,10 +112,33 @@ def parseFile(data):
         numLines -= 1
     return numLines
 
+# prompt user for filename
+def getFileName():
+    fileExts = '*.csv *.tsv *.xls *.xlsx'
+    filename = QtGui.QFileDialog.getOpenFileName(None, 'TelemetryPlot: Open log file', '', 'Files (%s)' % fileExts)
+    if filename in [None, '']:      # cancelled
+        return ''
+    return str(filename)            # convert qstring to str
+
+# returns CSV data
+def readFile(filename):
+    parts = filename.lower().rsplit('.', 1) # convert .XLS to .xls
+    extension = parts[-1]
+    data = ''
+    if extension in ['xls', 'xlsx']:
+        data = parseXLStoCSV(filename)  # convert XLS to CSV
+    if data == '':                      # must be CSV/TSV file
+        try:
+            with open(filename, 'r') as f:
+                data = f.read().replace('\t', ',')  # replace any tabs with commas
+        except:
+            pass        # return ''
+    return data
+
 # convert Excel file to CSV
 # booleans get converted to 1 & 0
 # xlrd cannot distinguish between ints and floats
-# returns CSV string , or None on error
+# returns CSV string , or '' on error
 def parseXLStoCSV(fileName):
     import xlrd
     try:
@@ -136,7 +163,7 @@ def parseXLStoCSV(fileName):
         return data
     except:         # this was not an XLS file
         displayStatus('Not an XLS file')
-        return None
+        return ''
 
 # fill the specified table with variable names
 # there are 2 tables: selected and unselected
@@ -165,7 +192,7 @@ def displayVariables(table, selected, hideInactive):
                 props = 'Min:%s, Max=%s' % (variable.min, variable.max)
             else:
                 props = 'Text with %s values' % len(variable.list)
-            item.setText(props)
+            item.setText(props)     # Variable's properties
             if variable.color != None:
                 item.setBackgroundColor(QtGui.QColor(*variable.color))
             variable.items.append(item)
@@ -189,13 +216,11 @@ def itemClicked(item):
         variable.color = None
         variable.plot = None        # kill any axis
     else:
-        if len(availColors) <= 0:
+        if len(availColors) == 0:
             displayStatus('You are viewing too many variables.  Kindly restrain yourself :-)')
             return
         variable.selected = True
         variable.color = availColors.pop()      # get last color
-        if not variable.numeric:                # variable has text values
-            variable.plot = 1
     displayAll()		# update both tables and plot
 
 # "Hide Inactive" checkbox was clicked
@@ -203,46 +228,40 @@ def checkedStateChanged(item=None):
     hideInactive = ui.checkBoxHideInactive.isChecked()
     displayVariables(table=ui.varUnselectedTable, selected=False, hideInactive=hideInactive)
 
-# Handle view resizing
+# view has resized; update auxiliary views to match
 def updateViews():
-    ## view has resized; update auxiliary views to match
     for variable in variables:
         if variable.plot != None:
             variable.plot.setGeometry(widget.plotItem.vb.sceneBoundingRect())
 
-            ## need to re-update linked axes since this was called
-            ## incorrectly while views had different shapes.
-            ## (probably this should be handled in ViewBox.resizeEvent)
-            variable.plot.linkedViewChanged(widget.plotItem.vb, variable.plot.XAxis)
-
 # plot all selected variables
 def displayPlot():
     widget.clear()      # erase previous plots
+    pitem = widget.plotItem                 # same as widget.plotItem getPlotItem()
     if timer != None:   # timer will be none if no file data is available, typically when bad file opened
         for variable in variables:
             if variable.selected:
-                if variable.plot == None:   # use the base display item
-                    widget.plot(timer.values, variable.displayValues, name=variable.name, pen=variable.color)
+                print 'Plotting', variable.name
+                if variable.numeric:        # use the base display item
+                    pitem.plot(timer.values, variable.displayValues, name=variable.name, pen=variable.color)
                 else:
                     # create an axis for this variable
                     vb = pg.ViewBox()
                     axis = pg.AxisItem('right')
-                    pitem = widget.getPlotItem()        # same as widget.plotItem
                     pitem.layout.addItem(axis, 2, 3)    # QGraphicsGridLayout(item, row, col) it has 4,3
                     pitem.scene().addItem(vb)           # add to pyqtgraph.GraphicsScene
                     axis.linkToView(vb)
                     vb.setXLink(pitem)
-                    #axis.setZValue(-10000)
-                    axis.setLabel(variable.name, color='#ff0000')
+                    axis.setZValue(-10000)              #  low Z value will always be drawn below
+                    axis.setLabel(variable.name, color='#ff0000')   #XXX Change color to variable.color
                     vb.setGeometry(pitem.vb.sceneBoundingRect())
                     vb.addItem(pg.PlotCurveItem(timer.values, variable.displayValues, name=variable.name, pen=variable.color))
 
 # displays plot and variable tables
 def displayAll():
+    hideInactive = ui.checkBoxHideInactive.isChecked()  # could call checkedStateChanged()
     displayPlot()
     displayVariables(table=ui.varSelectedTable, selected=True, hideInactive=False)
-    # could call checkedStateChanged()
-    hideInactive = ui.checkBoxHideInactive.isChecked()
     displayVariables(table=ui.varUnselectedTable, selected=False, hideInactive=hideInactive)
 
 # display line in status bar at bottom of screen
@@ -262,26 +281,6 @@ def connectAll():
     QtCore.QObject.connect(ui.actionGeneral_Help, QtCore.SIGNAL('triggered()'), generalHelp)
     QtCore.QObject.connect(ui.actionHelp_with_Plots, QtCore.SIGNAL('triggered()'), helpWithPlots)
     widget.plotItem.vb.sigResized.connect(updateViews)
-
-# returns CSV data
-def readFile(filename):
-    parts = filename.lower().rsplit('.', 1) # convert .XLS to .xls
-    extension = parts[-1]
-    data = None
-    if extension in ['xls', 'xlsx']:
-        data = parseXLStoCSV(filename)  # convert XLS to CSV
-    if data == None:                    # must be CSV/TSV file
-        with open(filename, 'r') as f:
-            data = f.read().replace('\t', ',')  # replace any tabs with commas
-    return data
-
-# prompt user for filename
-def getFileName():
-    fileExts = '*.csv *.tsv *.xls *.xlsx'
-    filename = QtGui.QFileDialog.getOpenFileName(None, 'TelemetryPlot: Open log file', '', 'Files (%s)' % fileExts)
-    if filename in [None, '']:      # cancelled
-        return None
-    return str(filename)            # convert qstring to str
 
 # menu pick item
 def openFile():
@@ -333,7 +332,7 @@ def main():
     ag = app.desktop().availableGeometry(-1)
     mainWindow.resize(ag.width()-10, ag.height()-40)   # magic val for windows app bar
 
-    # to create ui.plotWidget, see
+    # to create ui.plotWidget, see:
     #        http://www.pyqtgraph.org/documentation/how_to_use.html#embedding-widgets-inside-pyqt-applications
     # In Designer, create a QGraphicsView widget ("Graphics View" under the "Display Widgets" category).
     # Right-click on the QGraphicsView and select "Promote To...".
@@ -350,8 +349,6 @@ def main():
         filename = sys.argv[1]          # command line param
     else:
         filename = getFileName()
-        if filename == None:            # cancelled
-            sysExit()
 
     data = readFile(filename)
     numLines = parseFile(data)
