@@ -37,12 +37,13 @@ widget.setLabels(left='Numeric Y Value')
 widget.plotItem.vb.sigResized.connect(updateViews)
 
 pitem = widget.plotItem                 # same as widget.plotItem getPlotItem()
+pitem.plot([0.0, 1.1, 2.2, 3.3, 4.4, 5.5], [1,2,4,8,16,32])
 
 ## create third ViewBox. 
 ## this time we need to create a new axis as well.
 vb = pg.ViewBox()
 axis = pg.AxisItem('right')
-pitem.layout.addItem(axis, 2, 3)
+pitem.layout.addItem(axis, 2, 1)
 pitem.scene().addItem(vb)
 axis.linkToView(vb)
 vb.setXLink(pitem)
@@ -51,8 +52,7 @@ axis.setLabel('axis 3', color='#ff0000')
 
 vb.setGeometry(pitem.vb.sceneBoundingRect())
 
-pitem.plot([1,2,4,8,16,32])
-vb.addItem(pg.PlotCurveItem([3200,1600,800,400,200,100], pen='r'))
+vb.addItem(pg.PlotCurveItem([0.0, 1.1, 2.2, 3.3, 4.4, 5.5], [3200,1600,800,400,200,100], pen='r'))
 
 mainWindow.show()
 sys.exit(app.exec_())

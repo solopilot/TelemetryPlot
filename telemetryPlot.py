@@ -42,10 +42,10 @@ class Variable:
         self.color = None       # color of variable & plot. value from availColors[], when selected
         self.plot = None        # 
         self.items = []         # list of display items associated with variable's name
-        if name == 'AD Program':
+        """if name == 'AD Program':
             print name, 'selected'
             self.selected = True
-            self.color = availColors.pop()
+            self.color = availColors.pop()"""
 
     # input param 'value' is a string; add it to list of values[]
     def addValue(self, value):
@@ -236,8 +236,9 @@ def updateViews():
 
 # plot all selected variables
 def displayPlot():
-    widget.clear()      # erase previous plots
     pitem = widget.plotItem                 # same as widget.plotItem getPlotItem()
+    #pitem.getViewBox().clear()
+    widget.clear()      # erase previous plots
     if timer != None:   # timer will be none if no file data is available, typically when bad file opened
         for variable in variables:
             if variable.selected:
@@ -248,7 +249,7 @@ def displayPlot():
                     # create an axis for this variable
                     vb = pg.ViewBox()
                     axis = pg.AxisItem('right')
-                    pitem.layout.addItem(axis, 2, 3)    # QGraphicsGridLayout(item, row, col) it has 4,3
+                    pitem.layout.addItem(axis, 2, 1)    # QGraphicsGridLayout(item, row, col) it has 4,3
                     pitem.scene().addItem(vb)           # add to pyqtgraph.GraphicsScene
                     axis.linkToView(vb)
                     vb.setXLink(pitem)
@@ -345,11 +346,8 @@ def main():
     widget.setLabels(left='Numeric Y Value')
     connectAll()
 
-    if len(sys.argv) > 1:
-        filename = sys.argv[1]          # command line param
-    else:
-        filename = getFileName()
-
+    # pick up command line param, if present
+    filename = getFileName() if len(sys.argv) <= 1 else sys.argv[1]
     data = readFile(filename)
     numLines = parseFile(data)
     displayStatus('File: %s, %s lines' % (filename, numLines))
