@@ -21,7 +21,7 @@ variables = []      # list of Variables, all recorded data is read in here
 timer = None        # the first column, a varaiable with a list of time values
 mainWindow = None
 ui = None
-widget = None       # pyqtgraph item
+plotItem = None     # pyqtgraph PlotItem item
 colors = [(255, 0, 0), (255, 153, 51), (255, 204, 153), (255, 255, 153), (204, 255, 153), (0, 255, 0), 
           (204, 255, 229), (0, 128, 255), (178, 102, 255)]
 availColors = None  # available colors, copy of colors[]
@@ -40,12 +40,9 @@ class Variable:
         self.inactive = True    # is the value changing or not
         self.selected = False   # true if checkbox is checked
         self.color = None       # color of variable & plot. value from availColors[], when selected
-        self.plot = None        # 
+        self.axis = None        # axis item
+        self.vb = None          # viewBox item
         self.items = []         # list of display items associated with variable's name
-        """if name == 'AD Program':
-            print name, 'selected'
-            self.selected = True
-            self.color = availColors.pop()"""
 
     # input param 'value' is a string; add it to list of values[]
     def addValue(self, value):
@@ -214,7 +211,7 @@ def itemClicked(item):
         variable.selected = False
         availColors.append(variable.color)      # return color to end of list of available availColors
         variable.color = None
-        variable.plot = None        # kill any axis
+        variable.vb = None          # viewBox
     else:
         if len(availColors) == 0:
             displayStatus('You are viewing too many variables.  Kindly restrain yourself :-)')
@@ -230,33 +227,64 @@ def checkedStateChanged(item=None):
 
 # view has resized; update auxiliary views to match
 def updateViews():
+    print 'updateViews'
     for variable in variables:
-        if variable.plot != None:
-            variable.plot.setGeometry(widget.plotItem.vb.sceneBoundingRect())
+        if variable.vb != None:
+            variable.vb.setGeometry(plotItem.vb.sceneBoundingRect())
+
+class TextAxisItem(pg.AxisItem):
+    def tickStrings(self, values, scale, spacing):
+        for variable in variables:
+            if self == variable.axisItem:
+                break
+        else:
+            print 'TextAxisItem: axis not found', self
+            return
+        print 'tickString', variable.name, values, scale, spacing
+        valueList = variable.list
+        ret = []
+        for v in values:
+            i = int(v)
+            s = valueList[i] if i >= 0  and  i < len(valueList) else ''
+            ret.append(s)
+        return ret
 
 # plot all selected variables
 def displayPlot():
-    pitem = widget.plotItem                 # same as widget.plotItem getPlotItem()
-    #pitem.getViewBox().clear()
-    widget.clear()      # erase previous plots
-    if timer != None:   # timer will be none if no file data is available, typically when bad file opened
-        for variable in variables:
-            if variable.selected:
-                print 'Plotting', variable.name
-                if variable.numeric:        # use the base display item
-                    pitem.plot(timer.values, variable.displayValues, name=variable.name, pen=variable.color)
-                else:
-                    # create an axis for this variable
-                    vb = pg.ViewBox()
-                    axis = pg.AxisItem('right')
-                    pitem.layout.addItem(axis, 2, 1)    # QGraphicsGridLayout(item, row, col) it has 4,3
-                    pitem.scene().addItem(vb)           # add to pyqtgraph.GraphicsScene
-                    axis.linkToView(vb)
-                    vb.setXLink(pitem)
-                    axis.setZValue(-10000)              #  low Z value will always be drawn below
-                    axis.setLabel(variable.name, color='#ff0000')   #XXX Change color to variable.color
-                    vb.setGeometry(pitem.vb.sceneBoundingRect())
-                    vb.addItem(pg.PlotCurveItem(timer.values, variable.displayValues, name=variable.name, pen=variable.color))
+    if timer == None:    # timer will be none if no file data is available, typically when bad file opened
+        return
+    gl = pg.GraphicsLayout()
+    ui.graphicsLayout = gl
+
+    selectedVariables = []
+    for variable in variables:
+        if variable.selected:
+            selectedVariables.append(variable)
+
+    global plotItem
+    plotItem = None
+    col = len(selectedVariables)+1
+    for variable in selectedVariables:
+        print 'Plotting', variable.name
+        vb = pg.ViewBox()
+        vb.addItem(pg.PlotCurveItem(timer.values, variable.displayValues, name=variable.name, pen=variable.color))
+        axis = TextAxisItem("left") if variable.numeric else pg.AxisItem("left")
+        axis.setLabel(variable.name, color=variable.color)
+        variable.vb = vb
+        variable.axis = axis
+        col -= 1
+        if plotItem == None:            # set up base item
+            plotItem = pg.PlotItem(viewBox=vb, axisItems={'left' : axis})
+            plotItem.showGrid(x=True, y=True, alpha=0.75)
+            plotItem.setLabel('bottom', 'Time', 'Sec')
+            gl.addItem(plotItem, row=2, col=col, rowspan=1, colspan=1)  # add plotitem to layout
+            vb.sigResized.connect(updateViews)      # updates when resized
+        else:
+            gl.addItem(axis, row=2, col=col,  rowspan=1, colspan=1) # add axis to layout
+            gl.scene().addItem(vb)      # add viewboxes to layout 
+            axis.linkToView(vb)         # link axis with viewboxes
+            vb.setXLink(plotItem.vb)    # link viewboxes
+            vb.enableAutoRange()        # axis=pg.ViewBox.XYAxes, enable=True
 
 # displays plot and variable tables
 def displayAll():
@@ -281,7 +309,6 @@ def connectAll():
     QtCore.QObject.connect(ui.actionAbout, QtCore.SIGNAL('triggered()'), about)
     QtCore.QObject.connect(ui.actionGeneral_Help, QtCore.SIGNAL('triggered()'), generalHelp)
     QtCore.QObject.connect(ui.actionHelp_with_Plots, QtCore.SIGNAL('triggered()'), helpWithPlots)
-    widget.plotItem.vb.sigResized.connect(updateViews)
 
 # menu pick item
 def openFile():
@@ -312,19 +339,19 @@ def sysExit():
 def buttonCompressY():
     return  # disabled, causes divide by 0 exceptions
     if ui.buttonCompressY.text() == 'Compress Y Axis':
-        widget.setLogMode(False, True)
+        gl.setLogMode(False, True)
         ui.buttonCompressY.setText('Restore Y Axis')
     else:   # Restore Y Axis
-        widget.setLogMode(False, False)
+        gl.setLogMode(False, False)
         ui.buttonCompressY.setText('Compress Y Axis')
 
 # button for Reset Plot
 def buttonReset():
-    widget.autoRange()
-    widget.setLogMode(False, False)
+    gl.autoRange()
+    gl.setLogMode(False, False)
 
 def main():
-    global mainWindow, ui, widget
+    global mainWindow, ui, gl
     app = QtGui.QApplication(sys.argv)
     mainWindow =  QtGui.QMainWindow()
     ui = uiPlotView.Ui_MainWindow()
@@ -333,17 +360,6 @@ def main():
     ag = app.desktop().availableGeometry(-1)
     mainWindow.resize(ag.width()-10, ag.height()-40)   # magic val for windows app bar
 
-    # to create ui.plotWidget, see:
-    #        http://www.pyqtgraph.org/documentation/how_to_use.html#embedding-widgets-inside-pyqt-applications
-    # In Designer, create a QGraphicsView widget ("Graphics View" under the "Display Widgets" category).
-    # Right-click on the QGraphicsView and select "Promote To...".
-    # Under "Promoted class name", enter the class name you wish to use ("PlotWidget", "GraphicsLayoutWidget", etc).
-    # Under "Header file", enter "pyqtgraph".
-    # Click "Add", then click "Promote".
-    widget = ui.plotWidget
-    widget.showGrid(x=True, y=True, alpha=0.75)
-    widget.setLabel('bottom', 'Time', 'Sec')
-    widget.setLabels(left='Numeric Y Value')
     connectAll()
 
     # pick up command line param, if present

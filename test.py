@@ -29,14 +29,15 @@ ui.setupUi(mainWindow)
 ag = app.desktop().availableGeometry(-1)
 mainWindow.resize(ag.width()-10, ag.height()-40)   # magic val for windows app bar
 
-widget = ui.plotWidget
-widget.showGrid(x=True, y=True, alpha=0.75)
-widget.setLabel('bottom', 'Time', 'Sec')
-widget.setLabels(left='Numeric Y Value')
+gl = pg.GraphicsLayout()
+ui.graphicsLayout = gl
+gl.showGrid(x=True, y=True, alpha=0.75)
+gl.setLabel('bottom', 'Time', 'Sec')
+gl.setLabels(left='Numeric Y Value')
 
-widget.plotItem.vb.sigResized.connect(updateViews)
+gl.plotItem.vb.sigResized.connect(updateViews)
 
-pitem = widget.plotItem                 # same as widget.plotItem getPlotItem()
+pitem = gl.plotItem                 # same as gl.plotItem getPlotItem()
 pitem.plot([0.0, 1.1, 2.2, 3.3, 4.4, 5.5], [1,2,4,8,16,32])
 
 ## create third ViewBox. 

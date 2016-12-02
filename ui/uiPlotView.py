@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui\uiPlotView.ui'
 #
-# Created: Tue Nov 29 18:09:34 2016
+# Created: Thu Dec 01 18:44:10 2016
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -60,9 +60,9 @@ class Ui_MainWindow(object):
         self.lineSeparator_3.setFrameShadow(QtGui.QFrame.Sunken)
         self.lineSeparator_3.setObjectName(_fromUtf8("lineSeparator_3"))
         self.verticalLayout_3.addWidget(self.lineSeparator_3)
-        self.plotWidget = PlotWidget(self.centralwidget)
-        self.plotWidget.setObjectName(_fromUtf8("plotWidget"))
-        self.verticalLayout_3.addWidget(self.plotWidget)
+        self.graphicsLayout = QtGui.QGraphicsView(self.centralwidget)
+        self.graphicsLayout.setObjectName(_fromUtf8("graphicsLayout"))
+        self.verticalLayout_3.addWidget(self.graphicsLayout)
         self.horizontalLayoutButtons = QtGui.QHBoxLayout()
         self.horizontalLayoutButtons.setObjectName(_fromUtf8("horizontalLayoutButtons"))
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
@@ -220,4 +220,3 @@ class Ui_MainWindow(object):
         self.actionGeneral_Help.setText(_translate("MainWindow", "General Help", None))
         self.actionHelp_with_Plots.setText(_translate("MainWindow", "Help with Plots", None))
 
-from pyqtgraph import PlotWidget

@@ -1,8 +1,5 @@
-
+from pyqtgraph.Qt import QtGui,  QtCore
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui
-from ui import uiPlotView
-import sys
 
 class TextAxisItem(pg.AxisItem):
     def tickStrings(self, values, scale, spacing):
@@ -14,26 +11,6 @@ class TextAxisItem(pg.AxisItem):
             s = valueList[i] if i >= 0  and  i < len(valueList) else ''
             ret.append(s)
         return ret
-
-## view has resized; update auxiliary views to match
-def updateViews():
-    print 'updateViews'
-    v2.setGeometry(v1.sceneBoundingRect())
-    v3.setGeometry(v1.sceneBoundingRect())
-    v4.setGeometry(v1.sceneBoundingRect())
-    v5.setGeometry(v1.sceneBoundingRect())
-    v6.setGeometry(v1.sceneBoundingRect())
-
-#===========================
-app = QtGui.QApplication(sys.argv)
-mainWindow =  QtGui.QMainWindow()
-ui = uiPlotView.Ui_MainWindow()
-ui.setupUi(mainWindow)
-
-ag = app.desktop().availableGeometry(-1)
-mainWindow.resize(ag.width()-10, ag.height()-40)   # magic val for windows app bar
-
-
 
 pg.mkQApp()
 
