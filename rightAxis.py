@@ -29,8 +29,7 @@ ui.setupUi(mainWindow)
 ag = app.desktop().availableGeometry(-1)
 mainWindow.resize(ag.width()-10, ag.height()-40)   # magic val for windows app bar
 
-gl = pg.GraphicsLayout()
-ui.graphicsLayout = gl
+gl = ui.plotWidget
 gl.showGrid(x=True, y=True, alpha=0.75)
 gl.setLabel('bottom', 'Time', 'Sec')
 gl.setLabels(left='Numeric Y Value')
@@ -44,7 +43,7 @@ pitem.plot([0.0, 1.1, 2.2, 3.3, 4.4, 5.5], [1,2,4,8,16,32])
 ## this time we need to create a new axis as well.
 vb = pg.ViewBox()
 axis = pg.AxisItem('right')
-pitem.layout.addItem(axis, 2, 1)
+pitem.layout.addItem(axis, 2, 3)
 pitem.scene().addItem(vb)
 axis.linkToView(vb)
 vb.setXLink(pitem)

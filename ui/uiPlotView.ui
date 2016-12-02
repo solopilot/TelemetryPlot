@@ -61,7 +61,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QGraphicsView" name="graphicsLayout"/>
+       <widget class="PlotWidget" name="plotWidget"/>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayoutButtons">
@@ -311,6 +311,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
