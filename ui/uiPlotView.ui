@@ -61,7 +61,7 @@
        </widget>
       </item>
       <item>
-       <widget class="PlotWidget" name="plotWidget"/>
+       <widget class="GraphicsLayoutWidget" name="graphicsLayoutWidget"/>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayoutButtons">
@@ -80,6 +80,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="buttonCompressY">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="toolTip">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Make Y Axis Log10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
@@ -272,7 +275,6 @@
     </property>
     <addaction name="actionAbout"/>
     <addaction name="actionGeneral_Help"/>
-    <addaction name="actionHelp_with_Plots"/>
     <addaction name="separator"/>
     <addaction name="actionHow_to_pick_your_nose"/>
    </widget>
@@ -313,7 +315,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
+   <class>GraphicsLayoutWidget</class>
    <extends>QGraphicsView</extends>
    <header>pyqtgraph</header>
   </customwidget>

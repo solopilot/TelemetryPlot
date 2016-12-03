@@ -17,32 +17,34 @@ from ui import uiPlotView       # ui screen built by QT Designer
 import version                  # contains compile & build date
 
 # globals
-variables = []      # list of Variables, all recorded data is read in here
+variables = None    # list of Variables, all recorded data is read in here
 timer = None        # the first column, a varaiable with a list of time values
 mainWindow = None
 ui = None
 plotItem = None     # pyqtgraph PlotItem item
+availColors = None  # available colors for plots, start with copy of colors[]
+
+#constant
 colors = [(255, 0, 0), (255, 153, 51), (255, 204, 153), (255, 255, 153), (204, 255, 153), (0, 255, 0), 
           (204, 255, 229), (0, 128, 255), (178, 102, 255)]
-availColors = None  # available colors, copy of colors[]
 
-# Variable represents one column in the recorded data
+# Variable represents one column in the recorded data, one plot
 class Variable:
     def __init__(self, name, column):
         self.name = name        # name from header line
-        self.column = column    # column index
-        self.numeric = False    # plottable
+        self.column = column    # column index in input table
+        self.numeric = False    # plottable as values as opposed to strings
         self.values = []        # list of recorded values for this variable
         self.displayValues = [] # nonnumeric values are converted to integers
         self.max = ''           # max value: empty
         self.min = ''
         self.list = []          # list of unique values for non numeric variables
         self.inactive = True    # is the value changing or not
-        self.selected = False   # true if checkbox is checked
+        self.selected = False   # true if variable is selected for display
         self.color = None       # color of variable & plot. value from availColors[], when selected
-        self.axis = None        # axis item
-        self.vb = None          # viewBox item
-        self.items = []         # list of display items associated with variable's name
+        self.axis = None        # axis item in plot, needed for tickStrings()
+        self.vb = None          # viewBox item, needed for updateViews() on resize
+        self.items = []         # list of display items associated with variable's name in table
 
     # input param 'value' is a string; add it to list of values[]
     def addValue(self, value):
@@ -61,7 +63,7 @@ class Variable:
             self.max = max(self.values)
             self.min = min(self.values)
             self.inactive = self.max == self.min    # non changing
-        except:
+        except:     # went bang
             self.numeric = False
             # convert string values into list indices
             for val in self.values:
@@ -69,6 +71,35 @@ class Variable:
                     self.list.append(val)           # list of unique values, in order of appearance
                 self.displayValues.append(self.list.index(val))
             self.inactive = len(self.list) <= 1     # non changing
+
+            # check for boolean values
+            if len(self.list) == 2:
+                for v in self.list:
+                    if v.lower() not in ['false', 'true']:
+                        break       # not boolean
+                else:           # yes boolean
+                    # check if false comes before true
+                    if self.list[0].lower() != 'false':
+                        for i in range(self.displayValues): # flip the values
+                            self.displayValues[i] = 1 - self.displayValues
+                    self.list = ['False', 'True']   # need false to be 0 and true to be 1
+
+# subclass AxisItem to provide text units
+class TextAxisItem(pg.AxisItem):
+    # overload tickStrings() to return values for this plot
+    def tickStrings(self, values, scale, spacing):
+        for variable in variables:      # find variable associated with this axis item
+            if self == variable.axis:
+                break
+        else:                           # this should not happen
+            return [''] * len(values)   # return empty ticks
+
+        ret = []
+        for v in values:
+            i = int(v)      # v can be a float
+            s = variable.list[i] if i in range(len(variable.list)) else ''  # else empty str
+            ret.append(s)
+        return ret
 
 # parse CSV data that was previously read in and set up globals variables[] and timer
 # data must be lines separated by '\n'
@@ -107,6 +138,8 @@ def parseFile(data):
     if len(variables) > 0:
         timer = variables.pop(0)    # sets the timer column variable
         numLines -= 1
+
+    variables.sort(key=lambda variable: variable.name)  # sort the list
     return numLines
 
 # prompt user for filename
@@ -159,7 +192,7 @@ def parseXLStoCSV(fileName):
             data += ','.join(values)+'\n'
         return data
     except:         # this was not an XLS file
-        displayStatus('Not an XLS file')
+        displayStatus('%s: Not an Excel file' % fileName)
         return ''
 
 # fill the specified table with variable names
@@ -170,7 +203,7 @@ def displayVariables(table, selected, hideInactive):
                                                 (not hideInactive or not variable.inactive))
     table.setRowCount(count)
     table.setSortingEnabled(False)
-    n = 0
+    nRow = 0
     for variable in variables:
         if variable.selected == selected  and    \
                 (not hideInactive or not variable.inactive):
@@ -179,10 +212,10 @@ def displayVariables(table, selected, hideInactive):
             item.setText(variable.name)
             if variable.inactive:
                 item.setTextColor(QtGui.QColor('red'))
-            if variable.color != None:
+            if variable.color != None:  # only variables that are selected have a color
                 item.setBackgroundColor(QtGui.QColor(*variable.color))
             variable.items = [ item ]
-            table.setItem(n, 0, item)
+            table.setItem(nRow, 0, item)
 
             item = QtGui.QTableWidgetItem()
             if variable.numeric:
@@ -190,30 +223,33 @@ def displayVariables(table, selected, hideInactive):
             else:
                 props = 'Text with %s values' % len(variable.list)
             item.setText(props)     # Variable's properties
-            if variable.color != None:
+            if variable.color != None:  # only variables that are selected have a color
                 item.setBackgroundColor(QtGui.QColor(*variable.color))
             variable.items.append(item)
-            table.setItem(n, 1, item)
-            n += 1
+            table.setItem(nRow, 1, item)
+            nRow += 1
     table.clearSelection()          # restore color from blue (selected)
     table.setSortingEnabled(True)
+    table.sortItems(0)              # sort by col 0 (name) to start with
     table.resizeColumnsToContents()
 
-# a checkbox or variable name was clicked in a table 
+# a variable name was clicked in a table 
 def itemClicked(item):
     for variable in variables:      # find item that was clicked
-        if item in variable.items:  # non numeric variables not displayed
+        if item in variable.items:
             break
-    else:
+    else:                           # this should never happen
         displayStatus('Please click on a variable')
         return
+
     if variable.selected:
-        variable.selected = False
+        variable.selected = False   # flip it off
         availColors.append(variable.color)      # return color to end of list of available availColors
         variable.color = None
-        variable.vb = None          # viewBox
+        variable.axis = None        # discard AxisItem
+        variable.vb = None          # discard viewBox
     else:
-        if len(availColors) == 0:
+        if len(availColors) == 0:   # no more colors
             displayStatus('You are viewing too many variables.  Kindly restrain yourself :-)')
             return
         variable.selected = True
@@ -227,64 +263,48 @@ def checkedStateChanged(item=None):
 
 # view has resized; update auxiliary views to match
 def updateViews():
-    print 'updateViews'
     for variable in variables:
-        if variable.vb != None:
+        if variable.selected:
             variable.vb.setGeometry(plotItem.vb.sceneBoundingRect())
-
-class TextAxisItem(pg.AxisItem):
-    def tickStrings(self, values, scale, spacing):
-        for variable in variables:
-            if self == variable.axisItem:
-                break
-        else:
-            print 'TextAxisItem: axis not found', self
-            return
-        print 'tickString', variable.name, values, scale, spacing
-        valueList = variable.list
-        ret = []
-        for v in values:
-            i = int(v)
-            s = valueList[i] if i >= 0  and  i < len(valueList) else ''
-            ret.append(s)
-        return ret
 
 # plot all selected variables
 def displayPlot():
     if timer == None:    # timer will be none if no file data is available, typically when bad file opened
         return
-    gl = pg.GraphicsLayout()
-    ui.graphicsLayout = gl
-
-    selectedVariables = []
-    for variable in variables:
-        if variable.selected:
-            selectedVariables.append(variable)
+    gl = ui.graphicsLayoutWidget
+    gl.clear()
+    s = gl.scene()
+    for it in s.items():
+        if not isinstance(it, pg.GraphicsLayout):
+            s.removeItem(it)
 
     global plotItem
     plotItem = None
-    col = len(selectedVariables)+1
-    for variable in selectedVariables:
-        print 'Plotting', variable.name
-        vb = pg.ViewBox()
-        vb.addItem(pg.PlotCurveItem(timer.values, variable.displayValues, name=variable.name, pen=variable.color))
-        axis = TextAxisItem("left") if variable.numeric else pg.AxisItem("left")
-        axis.setLabel(variable.name, color=variable.color)
-        variable.vb = vb
-        variable.axis = axis
-        col -= 1
-        if plotItem == None:            # set up base item
-            plotItem = pg.PlotItem(viewBox=vb, axisItems={'left' : axis})
-            plotItem.showGrid(x=True, y=True, alpha=0.75)
-            plotItem.setLabel('bottom', 'Time', 'Sec')
-            gl.addItem(plotItem, row=2, col=col, rowspan=1, colspan=1)  # add plotitem to layout
-            vb.sigResized.connect(updateViews)      # updates when resized
-        else:
-            gl.addItem(axis, row=2, col=col,  rowspan=1, colspan=1) # add axis to layout
-            gl.scene().addItem(vb)      # add viewboxes to layout 
-            axis.linkToView(vb)         # link axis with viewboxes
-            vb.setXLink(plotItem.vb)    # link viewboxes
-            vb.enableAutoRange()        # axis=pg.ViewBox.XYAxes, enable=True
+    col = 0                     # axis column in graphicsLayoutWidget
+    for variable in variables:
+        if variable.selected:
+            vb = pg.ViewBox()
+            vb.addItem(pg.PlotCurveItem(timer.values, variable.displayValues, name=variable.name, pen=variable.color))
+            variable.vb = vb
+    
+            axis = pg.AxisItem('left') if variable.numeric else TextAxisItem('left')
+            color = '#'+''.join('%02x' % i for i in variable.color)     # setLabel() does not work with color tuple
+            axis.setLabel(variable.name, color=color)
+            variable.axis = axis
+    
+            col += 1
+            if plotItem == None:            # set up base item
+                plotItem = pg.PlotItem(viewBox=vb, axisItems={'left' : axis})
+                plotItem.showGrid(x=True, y=True, alpha=0.75)
+                plotItem.setLabel('bottom', 'Time', 'Sec')
+                gl.addItem(plotItem, row=2, col=col, rowspan=1, colspan=1)  # add plotitem to layout
+                vb.sigResized.connect(updateViews)      # updates when resized
+            else:
+                gl.addItem(axis, row=2, col=col,  rowspan=1, colspan=1) # add axis to layout
+                gl.scene().addItem(vb)      # add viewboxes to layout 
+                axis.linkToView(vb)         # link axis with viewboxes
+                vb.setXLink(plotItem.vb)    # link viewboxes
+                vb.enableAutoRange()        # axis=pg.ViewBox.XYAxes, enable=True
 
 # displays plot and variable tables
 def displayAll():
@@ -298,6 +318,7 @@ def displayStatus(msg):
     mainWindow.statusBar().showMessage(msg)
 
 # connect display items with callback functions
+# plot resize is connected each time a new plot is drawn
 def connectAll():
     ui.varSelectedTable.itemClicked.connect(itemClicked)
     ui.varUnselectedTable.itemClicked.connect(itemClicked)
@@ -308,7 +329,6 @@ def connectAll():
     QtCore.QObject.connect(ui.actionOpen_File, QtCore.SIGNAL('triggered()'), openFile)
     QtCore.QObject.connect(ui.actionAbout, QtCore.SIGNAL('triggered()'), about)
     QtCore.QObject.connect(ui.actionGeneral_Help, QtCore.SIGNAL('triggered()'), generalHelp)
-    QtCore.QObject.connect(ui.actionHelp_with_Plots, QtCore.SIGNAL('triggered()'), helpWithPlots)
 
 # menu pick item
 def openFile():
@@ -328,16 +348,13 @@ def generalHelp():
     webbrowser.open('generalHelp.html', new=0, autoraise=True)
 
 # menu pick item
-def helpWithPlots():
-    webbrowser.open('helpWithPlots.html', new=0, autoraise=True)
-
-# menu pick item
 def sysExit():
     sys.exit()
 
 # button for compress Y axis
 def buttonCompressY():
     return  # disabled, causes divide by 0 exceptions
+    gl = ui.graphicsLayoutWidget
     if ui.buttonCompressY.text() == 'Compress Y Axis':
         gl.setLogMode(False, True)
         ui.buttonCompressY.setText('Restore Y Axis')
@@ -347,8 +364,7 @@ def buttonCompressY():
 
 # button for Reset Plot
 def buttonReset():
-    gl.autoRange()
-    gl.setLogMode(False, False)
+    displayPlot()
 
 def main():
     global mainWindow, ui, gl

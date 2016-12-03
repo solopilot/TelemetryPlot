@@ -31,11 +31,10 @@ ui = uiPlotView.Ui_MainWindow()
 ui.setupUi(mainWindow)
 
 ag = app.desktop().availableGeometry(-1)
-mainWindow.resize(ag.width()-10, ag.height()-40)   # magic val for windows app bar
+#mainWindow.resize(ag.width()-10, ag.height()-40)   # magic val for windows app bar
 
-
-
-pg.mkQApp()
+# layout
+l = ui.graphicsLayoutWidget
 
 # Axis
 a2 = pg.AxisItem("left")
@@ -50,15 +49,6 @@ v3 = pg.ViewBox()
 v4 = pg.ViewBox()
 v5 = pg.ViewBox()
 v6 = pg.ViewBox()
-
-# main view
-pw = pg.GraphicsView()
-pw.setWindowTitle('pyqtgraph example: multiple y-axis')
-pw.show()
-
-# layout
-l = pg.GraphicsLayout()
-pw.setCentralWidget(l)
 
 # add axis to layout
 ## watch the col parameter here for the position
@@ -103,13 +93,6 @@ a4.setLabel('axis 4 in Viewbox 4', color='#2EFE2E')
 a5.setLabel('axis 5 in Viewbox 5', color='#FFFF00')
 a6.setLabel('axis 6 in Viewbox 6', color='#FE2E64')
 
-# slot: update view when resized
-def updateViews():
-    v2.setGeometry(v1.sceneBoundingRect())
-    v3.setGeometry(v1.sceneBoundingRect())
-    v4.setGeometry(v1.sceneBoundingRect())
-    v5.setGeometry(v1.sceneBoundingRect())
-    v6.setGeometry(v1.sceneBoundingRect())
 
 # data
 x = [1,2,3,4,5,6]
@@ -140,7 +123,5 @@ v6.enableAutoRange()
 
 updateViews()
 
-if __name__ == '__main__':
-    import sys
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
+mainWindow.show()
+sys.exit(app.exec_())
