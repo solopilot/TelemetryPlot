@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui\uiPlotView.ui'
 #
-# Created: Fri Dec 02 19:13:21 2016
+# Created: Sat Dec 03 08:37:26 2016
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -197,7 +197,7 @@ class Ui_MainWindow(object):
         self.buttonReset.setText(_translate("MainWindow", "Reset Plot", None))
         self.labelTitle_2.setText(_translate("MainWindow", "Displayed variables", None))
         self.checkBox_2.setToolTip(_translate("MainWindow", "<html><head/><body><p>Come back later for this</p></body></html>", None))
-        self.checkBox_2.setText(_translate("MainWindow", "Animate", None))
+        self.checkBox_2.setText(_translate("MainWindow", "Correlate", None))
         self.varSelectedTable.setToolTip(_translate("MainWindow", "<html><head/><body><p>Click on a variable to remove it from the display list.  The color of each variable is the color of the variable\'s plot line.</p></body></html>", None))
         item = self.varSelectedTable.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Variable", None))

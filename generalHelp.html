@@ -13,32 +13,39 @@
 </head>
 <body>
 
+
+<h1>Help with plots</h1>
+
+<p>Each variable plotted has its own Y axis with scale.  Additional axes may appear on the left.  
+Each is identified by the colored variable name.</p>
+
+<p>Use the mouse wheel to zoom in and out of a point in the frame.  The zoom centers on the mouse position.</p>
+
+<p>Left click on the plot area and move the mouse left or right to pan along the X axis (time).</p>
+
+<p>Left click on the plot area and move the mouse up or down to pan the main plot which has its axis on the left.
+To move other plots, left click on the associated Y axis and move the mouse up or down.  
+Jiggling it helps locate a plot among all other plots.</p>
+
+<p>Right click on the plot area and move the mouse to change the scale for the main plot which has its axis on the left.
+To scale other plots, move the mouse over the associated Y axis and use the scroll wheel.  </p>
+
+<p>Click "Reset Plot" to re-center all plots within the frame.  This is useful when you are done playing with mouse buttons and have messed up the plots.</p>
+
+<p>Click "Compress Y Axis" to make the Y Axis a Log scale.  This is actually not terribly helpful since most data is linear.  Click it again when you discover that I am right.</p>
+
 <h1>General Help</h1>
-
-<p>A data file can be in one of several formats: Tab Separated Value,  Comma Separated value or a standard Excel file.  TSV & CSV files contain lines separated by the NewLine character ('\n').  Lines starting with the '#' character are ignored as comments.  The first non-comment line (or row) contains names of the recorded Variables.  Subsequent lines contain values for the variable in that row.  The first value in each line should be the time.</p>
-
-<p>You can open a different file via the File menu item.  This viewer does not modify files.</p>
 
 <p>A list of all available variables is displayed.  Clicking on a variable selects it.  You can click on multiple variables.  Clicking on a selected variable un-selects it.  Each variable is displayed in a different color.  The color of the plot corresponds to the color of the variable.  </p>
 
 <p>Click on a column header to sort (or reverse sort) by that column</p>
 
+<p>Variables that do not change value in the recording are called "inactive".  They are marked in red.  Plotting them will result in a boring flat line.  You can hide them by clicking on the "Hide" checkbox.  </p>
 
+<p>You can open a different file via the File menu item.  This viewer does not modify, mutilate, harrass or vilify files as yet.</p>
 
-<h1>Help with plots</h1>
+<p>A data file can be in one of several formats: Tab Separated Value,  Comma Separated Value or a standard Excel file.  TSV & CSV files contain lines separated by the NewLine character ('\n').  Lines starting with the '#' character are ignored as comments.  The first non-comment line (row) should contain names of the recorded Variables.  Subsequent lines contain values for the variable in that row.  The first value in each line should be the time.  Variable values can be numeric or text.  If text, then the range of values should be limited, like [ Initial, Looking for Target, Target Acquired, Shooting, Target Destroyed, Missed - Dammit, Done ]</p>
 
-<p>Each variable plotted has its own axis.  This may appear to the right or left</p>
-
-<p>Use the mouse wheel to zoom in and out of a point in the frame.</p>
-
-<p>Left click on the plot area and move the mouse to pan.</p>
-
-<p>When multiple variables are being displayed, move the mouse to a specific axis and drag it up or down.  This will move the associated variable.</p>
-
-<p>Roll the mouse wheel over the axis to change the Y scale.  Alternatively, right click on the plot area and move the mouse up or down.</p>
-
-<p>Displaying Log Y will fail if any displayed variable has a 0 value.</p>
-<p>Reset Plot to re-center all plots within the frame.</p>
 </body>
 </html>
 

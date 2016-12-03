@@ -18,8 +18,8 @@ import version                  # contains compile & build date
 
 # globals
 variables = None    # list of Variables, all recorded data is read in here
-timer = None        # the first column, a varaiable with a list of time values
-mainWindow = None
+timer = None        # the first column, a variable with a list of time values
+mainWindow = None	# Qt GUI stuff
 ui = None
 plotItem = None     # pyqtgraph PlotItem item
 availColors = None  # available colors for plots, start with copy of colors[]
@@ -139,7 +139,7 @@ def parseFile(data):
         timer = variables.pop(0)    # sets the timer column variable
         numLines -= 1
 
-    variables.sort(key=lambda variable: variable.name)  # sort the list
+    variables.sort(key=lambda variable: variable.name)  # sort the list for no good reason
     return numLines
 
 # prompt user for filename
@@ -168,7 +168,7 @@ def readFile(filename):
 # convert Excel file to CSV
 # booleans get converted to 1 & 0
 # xlrd cannot distinguish between ints and floats
-# returns CSV string , or '' on error
+# returns CSV string, or '' on error
 def parseXLStoCSV(fileName):
     import xlrd
     try:
@@ -269,14 +269,14 @@ def updateViews():
 
 # plot all selected variables
 def displayPlot():
-    if timer == None:    # timer will be none if no file data is available, typically when bad file opened
+    if timer == None:       # timer will be none if no file data is available, typically when bad file opened
         return
     gl = ui.graphicsLayoutWidget
-    gl.clear()
-    s = gl.scene()
-    for it in s.items():
-        if not isinstance(it, pg.GraphicsLayout):
-            s.removeItem(it)
+    gl.clear()              # try to remove previously added items 
+    scene = gl.scene()      # somehow, clear() doesn't remove some added plots
+    for item in scene.items():
+        if not isinstance(item, pg.GraphicsLayout):     # leave one frame
+            scene.removeItem(item)
 
     global plotItem
     plotItem = None
@@ -287,11 +287,11 @@ def displayPlot():
             vb.addItem(pg.PlotCurveItem(timer.values, variable.displayValues, name=variable.name, pen=variable.color))
             variable.vb = vb
     
-            axis = pg.AxisItem('left') if variable.numeric else TextAxisItem('left')
+            axis = pg.AxisItem('right') if variable.numeric else TextAxisItem('right')
             color = '#'+''.join('%02x' % i for i in variable.color)     # setLabel() does not work with color tuple
             axis.setLabel(variable.name, color=color)
             variable.axis = axis
-    
+
             col += 1
             if plotItem == None:            # set up base item
                 plotItem = pg.PlotItem(viewBox=vb, axisItems={'left' : axis})
@@ -317,19 +317,6 @@ def displayAll():
 def displayStatus(msg):
     mainWindow.statusBar().showMessage(msg)
 
-# connect display items with callback functions
-# plot resize is connected each time a new plot is drawn
-def connectAll():
-    ui.varSelectedTable.itemClicked.connect(itemClicked)
-    ui.varUnselectedTable.itemClicked.connect(itemClicked)
-    ui.checkBoxHideInactive.stateChanged.connect(checkedStateChanged)
-    QtCore.QObject.connect(ui.buttonReset, QtCore.SIGNAL('clicked()'), buttonReset)
-    QtCore.QObject.connect(ui.buttonCompressY, QtCore.SIGNAL('clicked()'), buttonCompressY)
-    QtCore.QObject.connect(ui.actionExit, QtCore.SIGNAL('triggered()'), sysExit)
-    QtCore.QObject.connect(ui.actionOpen_File, QtCore.SIGNAL('triggered()'), openFile)
-    QtCore.QObject.connect(ui.actionAbout, QtCore.SIGNAL('triggered()'), about)
-    QtCore.QObject.connect(ui.actionGeneral_Help, QtCore.SIGNAL('triggered()'), generalHelp)
-
 # menu pick item
 def openFile():
     filename = getFileName()                # prompt user for filename
@@ -352,8 +339,8 @@ def sysExit():
     sys.exit()
 
 # button for compress Y axis
+# disabled, causes divide by 0 exceptions
 def buttonCompressY():
-    return  # disabled, causes divide by 0 exceptions
     gl = ui.graphicsLayoutWidget
     if ui.buttonCompressY.text() == 'Compress Y Axis':
         gl.setLogMode(False, True)
@@ -365,6 +352,19 @@ def buttonCompressY():
 # button for Reset Plot
 def buttonReset():
     displayPlot()
+
+# connect display items with callback functions
+# plot resize event is connected each time a new plot is drawn
+def connectAll():
+    ui.varSelectedTable.itemClicked.connect(itemClicked)
+    ui.varUnselectedTable.itemClicked.connect(itemClicked)
+    ui.checkBoxHideInactive.stateChanged.connect(checkedStateChanged)
+    QtCore.QObject.connect(ui.buttonReset, QtCore.SIGNAL('clicked()'), buttonReset)
+    QtCore.QObject.connect(ui.buttonCompressY, QtCore.SIGNAL('clicked()'), buttonCompressY)
+    QtCore.QObject.connect(ui.actionExit, QtCore.SIGNAL('triggered()'), sysExit)
+    QtCore.QObject.connect(ui.actionOpen_File, QtCore.SIGNAL('triggered()'), openFile)
+    QtCore.QObject.connect(ui.actionAbout, QtCore.SIGNAL('triggered()'), about)
+    QtCore.QObject.connect(ui.actionGeneral_Help, QtCore.SIGNAL('triggered()'), generalHelp)
 
 def main():
     global mainWindow, ui, gl
