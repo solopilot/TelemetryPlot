@@ -5,9 +5,7 @@ Created on Nov 26, 2016
 
 Displays recorded log data for multiple variables in a tabular file (XLS, CSV or TSV)
 Data for each variable should be in a column, the first row contains the variable's name
-Booleans are converted to 1.0 or 0.0
-xlrd does not distinguish between float and ints
-also, pyqtgraph displays arrays of floats, so everything is in float
+xlrd converts booleans to 1 & 0; it does not distinguish between float and ints
 '''
 from PyQt4 import QtGui, QtCore
 import pyqtgraph as pg
@@ -44,7 +42,7 @@ class Variable:
         self.color = None       # color of variable & plot. value from availColors[], when selected
         self.axis = None        # axis item in plot, needed for tickStrings()
         self.vb = None          # viewBox item, needed for updateViews() on resize
-        self.items = []         # list of display items associated with variable's name in table
+        self.items = []         # list of row display items associated with variable in variable table
 
     # input param 'value' is a string; add it to list of values[]
     def addValue(self, value):
@@ -88,6 +86,7 @@ class Variable:
 class TextAxisItem(pg.AxisItem):
     # overload tickStrings() to return values for this plot
     def tickStrings(self, values, scale, spacing):
+        print 'tickStrings', self, values, scale, spacing
         for variable in variables:      # find variable associated with this axis item
             if self == variable.axis:
                 break
@@ -139,7 +138,6 @@ def parseFile(data):
         timer = variables.pop(0)    # sets the timer column variable
         numLines -= 1
 
-    variables.sort(key=lambda variable: variable.name)  # sort the list for no good reason
     return numLines
 
 # prompt user for filename
@@ -254,6 +252,10 @@ def itemClicked(item):
             return
         variable.selected = True
         variable.color = availColors.pop()      # get last color
+        # move variable to end of list
+        # this causes the variable that was selected first to get the column on the right
+        variables.remove(variable)  # move variable to end of list
+        variables.append(variable)
     displayAll()		# update both tables and plot
 
 # "Hide Inactive" checkbox was clicked
@@ -273,7 +275,7 @@ def displayPlot():
         return
     gl = ui.graphicsLayoutWidget
     gl.clear()              # try to remove previously added items 
-    scene = gl.scene()      # somehow, clear() doesn't remove some added plots
+    scene = gl.scene()      # somehow, clear() doesn't remove some added plots in scene()
     for item in scene.items():
         if not isinstance(item, pg.GraphicsLayout):     # leave one frame
             scene.removeItem(item)
